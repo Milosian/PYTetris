@@ -7,7 +7,6 @@ pg.init();
 pg.display.set_caption("Tetris");
 width, height = 800, 850
 boardWidth, boardHeight = 400, 800
-colums, rows = 10, 20
 X = (width - boardWidth)
 Y = (height - boardHeight)
 
@@ -25,6 +24,20 @@ textures = {
     'Z' : pg.image.load("assets/Z.png"),
 }
 
+class Board:
+    def __init__(self):
+        self.rows = 20
+        self.columns = 10
+        self.cellSize = 30
+        self.grid = [[0 for j in range(self.columns)] for i in range(self.rows)]
+    
+    def print_grid(self):
+        for row in range(self.rows):
+            for columns in range(self.columns):
+                print(self.grid[row][columns], end = "")
+            print()  
+gameBoard = Board()
+gameBoard.print_grid()
 while True:
     for event in pg.event.get():
         if event.type == pg.QUIT:
