@@ -1,5 +1,6 @@
 import pygame as pg
 import sys
+import random
 
 # Initialize Pygame
 pg.init()
@@ -36,27 +37,55 @@ class Colors:
     def getCellColors(cls):
         return [cls.white, cls.blue, cls.indigo, cls.orange, cls.yellow, cls.green, cls.purple, cls.red]
 
+# Block's postion class
 class Position:
     def __init__(self, row, column):
         self.row = row
         self.column = column
         
+# Block class with all parameters        
 class Block:
     def __init__(self, id):
         self.id = id
         self.cells = {}
         self.cellSize = 35
-        self.rotaionState = 0
+        self.row_offset = 0
+        self.column_offset = 0
+        self.rotation_offset = 0
+        self.rotationState = 0
         self.colors = Colors.getCellColors()
     
+    def move(self, rows, columns):
+        self.row_offset += rows
+        self.column_offset += columns
+        
+    def get_cell_position(self):
+        tiles = self.cells[self.rotationState]
+        moved_tiles = []
+        for postion in tiles:
+            postion = Position(postion.row + self.row_offset, postion.column + self.column_offset)   
+            moved_tiles.append(postion)
+        return moved_tiles
+    
+    def rotate(self):
+        self.rotationState += 1
+        if self.rotationState == len(self.cells):
+            self.rotaionState = 0
+    
+    def undo_rotation(self):
+        self.rotationState -= 1
+        if self.rotationState == 0:
+            self.rotaionState = len(self.cells) -1
+            
     def draw(self, screen):
-        tiles = self.cells[self.rotaionState]
+        tiles = self.get_cell_position()
         for tile in tiles:
             x = board_x + tile.column * self.cellSize + 1
             y = board_y + tile.row * self.cellSize + 1
             tileRect = pg.Rect(x, y, self.cellSize - 1, self.cellSize - 1)
             pg.draw.rect(window, self.colors[self.id], tileRect)
-        
+
+# Types of blocks      
 class LBlock(Block):
     def __init__(self):
         super().__init__(id = 1)
@@ -66,6 +95,70 @@ class LBlock(Block):
             2: [Position(1, 0), Position(1, 1), Position(1, 2), Position(2, 0)],
             3: [Position(0, 0), Position(0, 1), Position(1, 1), Position(2, 1)]
         }
+        self.move(0, 3)
+class JBlock(Block):
+    def __init__(self):
+        super().__init__(id = 2)
+        self.cells = {
+            0: [Position(0, 0), Position(1, 0), Position(1, 1), Position(1, 2)],
+            1: [Position(0, 1), Position(0, 2), Position(1, 1), Position(2, 1)],
+            2: [Position(1, 0), Position(1, 1), Position(1, 2), Position(2, 2)],
+            3: [Position(0, 1), Position(1, 1), Position(2, 1), Position(2, 1)]
+        }
+        self.move(0, 3)
+        
+class IBlock(Block):
+    def __init__(self):
+        super().__init__(id = 3)
+        self.cells = {
+            0: [Position(1, 0), Position(1, 1), Position(1, 2), Position(1, 3)],
+            1: [Position(0, 2), Position(1, 2), Position(2, 2), Position(3, 2)],
+            2: [Position(2, 0), Position(2, 1), Position(2, 2), Position(2, 3)],
+            3: [Position(0, 1), Position(1, 1), Position(2, 1), Position(3, 1)]
+        }
+        self.move(-1, 3)
+        
+class OBlock(Block):
+    def __init__(self):
+        super().__init__(id = 4)
+        self.cells = {
+            0: [Position(0, 0), Position(0, 1), Position(1, 0), Position(1, 1)],
+        }
+        self.move(0, 4)
+        
+class SBlock(Block):
+    def __init__(self):
+        super().__init__(id = 5)
+        self.cells = {
+            0: [Position(0, 1), Position(0, 2), Position(1, 0), Position(1, 1)],
+            1: [Position(0, 1), Position(1, 1), Position(1, 2), Position(2, 2)],
+            2: [Position(1, 1), Position(1, 2), Position(2, 0), Position(2, 1)],
+            3: [Position(0, 0), Position(1, 0), Position(1, 1), Position(2, 1)]
+        }
+        self.move(0, 3)
+        
+class TBlock(Block):
+    def __init__(self):
+        super().__init__(id = 6)
+        self.cells = {
+            0: [Position(0, 1), Position(1, 0), Position(1, 1), Position(1, 2)],
+            1: [Position(0, 1), Position(1, 1), Position(1, 2), Position(2, 1)],
+            2: [Position(1, 0), Position(1, 1), Position(1, 2), Position(2, 1)],
+            3: [Position(0, 1), Position(1, 0), Position(1, 1), Position(2, 1)]
+        }
+        self.move(0, 3)
+        
+class ZBlock(Block):
+    def __init__(self):
+        super().__init__(id = 7)
+        self.cells = {
+            0: [Position(0, 0), Position(0, 1), Position(1, 1), Position(1, 2)],
+            1: [Position(0, 2), Position(1, 1), Position(1, 2), Position(2, 1)],
+            2: [Position(1, 0), Position(1, 1), Position(2, 1), Position(2, 2)],
+            3: [Position(0, 1), Position(1, 0), Position(1, 1), Position(2, 0)]
+        }
+        self.move(0, 3)
+
 class TetrisBoard:
     def __init__(self):
         # Set up the game board parameters
@@ -81,7 +174,13 @@ class TetrisBoard:
             for column in range(self.columns):
                 print(self.grid[row][column], end = " ")
             print()  
-        
+    # Check if block is out of grid
+    def positionCheck(self, row, columns):
+        if row >= 0 and row < self.rows and columns >= 0 and columns < self.columns:
+            return True
+        return False
+    
+   
     def draw(self, window):
         # Draw the grid lines on the window
         for row in range(self.rows):
@@ -113,24 +212,83 @@ class TetrisBoard:
         inner_height = next_height - 2
         pg.draw.rect(window, (0, 15, 0), (next_x + 1, next_y + 1, inner_width, inner_height))
 
+# Gameplay functions
+class Gameplay:
+    def __init__(self):
+        self.grid = TetrisBoard()
+        self.blocks = [IBlock(), JBlock(), LBlock(), OBlock(), SBlock(), TBlock(), ZBlock()]
+        self.current_block = self.random_blocks()
+        self.next_block = self.random_blocks()
+    
+    # Get random blocks
+    def random_blocks(self):
+        if len(self.blocks) == 0:
+            self.blocks = [IBlock(), JBlock(), LBlock(), OBlock(), SBlock(), TBlock(), ZBlock()]
+        block =  random.choice(self.blocks)
+        self.blocks.remove(block)
+        return block
+    
+    # Moving blocks
+    def moveLeft(self):
+        self.current_block.move(0, -1)
+        if self.block_check() ==  False:
+            self.current_block.move(0, 1)
+             
+    def moveRight(self):
+        self.current_block.move(0, 1)
+        if self.block_check() ==  False:
+            self.current_block.move(0, -1)
+            
+    def moveDown(self):
+        self.current_block.move(1, 0)
+        if self.block_check() ==  False:
+            self.current_block.move(-1, 0)
+    
+    def rotate(self):
+        self.current_block.rotate()
+        if self.block_check() == False:
+            self.current_block.undo_rotation()
+        
+    def block_check(self):
+        tiles = self.current_block.get_cell_position()
+        for tile in tiles:
+            if self.grid.positionCheck(tile.row, tile.column) == False:
+                return False
+        return True
+        
+    def draw(self, window):
+        self.grid.draw(window)
+        self.current_block.draw(window)
+        
 # Create an instance of the TetrisBoard class
-tetris_board = TetrisBoard()
+# tetris_board = TetrisBoard()
 
-# Draw example blocks in random area
-block = LBlock()
+# # Draw example blocks in random area
+# block = TBlock()
 
-tetris_board.draw_block()
-
+# tetris_board.draw_block()
+game = Gameplay()
 # Main game loop
 while True:
     for event in pg.event.get():
         if event.type == pg.QUIT:
             pg.quit()
             sys.exit()
-
+        # Keys functions 
+        if event.type == pg.KEYDOWN:
+            if event.key == pg.K_LEFT:
+                game.moveLeft()
+            if event.key == pg.K_RIGHT:
+                game.moveRight()
+            if event.key == pg.K_DOWN:
+                game.moveDown()
+            if event.key == pg.K_UP:
+                game.rotate()
     window.fill((0, 40, 20))  # Clear the window
 
-    tetris_board.draw(window)  # Draw the Tetris board
-    block.draw(window)
+    game.draw(window)
+    
+    # tetris_board.draw(window)  # Draw the Tetris board
+    # block.draw(window)
     pg.display.update()
     clock.tick(60)
