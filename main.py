@@ -58,13 +58,13 @@ class Block:
     def move(self, rows, columns):
         self.row_offset += rows
         self.column_offset += columns
-        
+    
     def get_cell_position(self):
         tiles = self.cells[self.rotationState]
         moved_tiles = []
-        for postion in tiles:
-            postion = Position(postion.row + self.row_offset, postion.column + self.column_offset)   
-            moved_tiles.append(postion)
+        for position in tiles:
+            position = Position(position.row + self.row_offset, position.column + self.column_offset)   
+            moved_tiles.append(position)
         return moved_tiles
     
     def rotate(self):
@@ -77,7 +77,7 @@ class Block:
         if self.rotationState == 0:
             self.rotaionState = len(self.cells) -1
             
-    def draw(self, screen):
+    def draw(self, window):
         tiles = self.get_cell_position()
         for tile in tiles:
             x = board_x + tile.column * self.cellSize + 1
@@ -96,6 +96,7 @@ class LBlock(Block):
             3: [Position(0, 0), Position(0, 1), Position(1, 1), Position(2, 1)]
         }
         self.move(0, 3)
+        
 class JBlock(Block):
     def __init__(self):
         super().__init__(id = 2)
@@ -103,7 +104,7 @@ class JBlock(Block):
             0: [Position(0, 0), Position(1, 0), Position(1, 1), Position(1, 2)],
             1: [Position(0, 1), Position(0, 2), Position(1, 1), Position(2, 1)],
             2: [Position(1, 0), Position(1, 1), Position(1, 2), Position(2, 2)],
-            3: [Position(0, 1), Position(1, 1), Position(2, 1), Position(2, 1)]
+            3: [Position(0, 1), Position(1, 1), Position(2, 0), Position(2, 1)]
         }
         self.move(0, 3)
         
@@ -123,6 +124,9 @@ class OBlock(Block):
         super().__init__(id = 4)
         self.cells = {
             0: [Position(0, 0), Position(0, 1), Position(1, 0), Position(1, 1)],
+            1: [Position(0, 0), Position(0, 1), Position(1, 0), Position(1, 1)],
+            2: [Position(0, 0), Position(0, 1), Position(1, 0), Position(1, 1)],
+            3: [Position(0, 0), Position(0, 1), Position(1, 0), Position(1, 1)],
         }
         self.move(0, 4)
         
@@ -180,6 +184,10 @@ class TetrisBoard:
             return True
         return False
     
+    def emptyCheck(self, row, columns):
+        if self.grid[row][columns] == 0: 
+            return True
+        return False
    
     def draw(self, window):
         # Draw the grid lines on the window
@@ -231,24 +239,39 @@ class Gameplay:
     # Moving blocks
     def moveLeft(self):
         self.current_block.move(0, -1)
-        if self.block_check() ==  False:
+        if self.block_check() ==  False or self.block_fits() == False:
             self.current_block.move(0, 1)
              
     def moveRight(self):
         self.current_block.move(0, 1)
-        if self.block_check() ==  False:
+        if self.block_check() ==  False or self.block_fits() == False:
             self.current_block.move(0, -1)
             
     def moveDown(self):
         self.current_block.move(1, 0)
-        if self.block_check() ==  False:
+        if self.block_check() ==  False or self.block_fits() == False:
             self.current_block.move(-1, 0)
+            self.lockBlock()
     
     def rotate(self):
         self.current_block.rotate()
-        if self.block_check() == False:
+        if self.block_check() == False or self.block_fits() == False:
             self.current_block.undo_rotation()
-        
+    
+    # Lock block if is maximum down
+    def lockBlock(self):
+        tiles = self.current_block.get_cell_position()
+        for position in tiles:
+            self.grid.grid[position.row][position.column] = self.current_block.id
+        self.current_block = self.next_block
+        self.next_block = self.random_blocks()
+    
+    def block_fits(self):
+        tiles = self.current_block.get_cell_position()
+        for tile in tiles:
+            if self.grid.emptyCheck(tile.row, tile.column) == False:
+                return False
+        return True
     def block_check(self):
         tiles = self.current_block.get_cell_position()
         for tile in tiles:
@@ -259,15 +282,13 @@ class Gameplay:
     def draw(self, window):
         self.grid.draw(window)
         self.current_block.draw(window)
-        
-# Create an instance of the TetrisBoard class
-# tetris_board = TetrisBoard()
 
-# # Draw example blocks in random area
-# block = TBlock()
+clock = pg.time.Clock()        
 
-# tetris_board.draw_block()
 game = Gameplay()
+
+GAME_UPDATE = pg.USEREVENT
+pg.time.set_timer(GAME_UPDATE, 200)
 # Main game loop
 while True:
     for event in pg.event.get():
@@ -284,10 +305,12 @@ while True:
                 game.moveDown()
             if event.key == pg.K_UP:
                 game.rotate()
+        if event.type == GAME_UPDATE:
+            game.moveDown()
+            
     window.fill((0, 40, 20))  # Clear the window
 
     game.draw(window)
-    
     # tetris_board.draw(window)  # Draw the Tetris board
     # block.draw(window)
     pg.display.update()
