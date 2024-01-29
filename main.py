@@ -70,12 +70,12 @@ class Block:
     def rotate(self):
         self.rotationState += 1
         if self.rotationState == len(self.cells):
-            self.rotaionState = 0
+            self.rotationState = 0
     
     def undo_rotation(self):
         self.rotationState -= 1
         if self.rotationState == 0:
-            self.rotaionState = len(self.cells) -1
+            self.rotationState = len(self.cells) -1
             
     def draw(self, window):
         tiles = self.get_cell_position()
@@ -188,7 +188,39 @@ class TetrisBoard:
         if self.grid[row][columns] == 0: 
             return True
         return False
-   
+    
+    # Check if the row is full of 0 or not
+    def fullRow(self, row):
+        for column in range(self.columns):
+            if self.grid[row][column] == 0:
+                return False
+        return True
+    
+    # Clear
+    def clearRow(self, row):
+        for colums in range(self.columns):
+            self.grid[row][colums] = 0
+            
+    def move_rows_down(self, row, rows):
+        for column in range(self.columns):
+            self.grid[row+rows][column] = self.grid[row][column]
+            self.grid[row][column] = 0
+            
+    def clearFullRows(self):
+        completed = 0
+        for row in range(self.rows-1, 0, -1):
+            if self.fullRow(row):
+                self.clearRow(row)
+                completed += 1
+            elif completed > 0:
+                self.move_rows_down(row, completed)
+        return completed
+    
+    def reset(self):
+        for row in range(self.rows):
+            for column in range(self.columns):
+                self.grid[row][column] = 0
+                
     def draw(self, window):
         # Draw the grid lines on the window
         for row in range(self.rows):
@@ -227,7 +259,7 @@ class Gameplay:
         self.blocks = [IBlock(), JBlock(), LBlock(), OBlock(), SBlock(), TBlock(), ZBlock()]
         self.current_block = self.random_blocks()
         self.next_block = self.random_blocks()
-    
+        self.gameOver = False
     # Get random blocks
     def random_blocks(self):
         if len(self.blocks) == 0:
@@ -265,7 +297,16 @@ class Gameplay:
             self.grid.grid[position.row][position.column] = self.current_block.id
         self.current_block = self.next_block
         self.next_block = self.random_blocks()
+        self.grid.clearFullRows()
+        if self.block_fits() == False:
+            self.gameOver = True
     
+    def reset(self):
+        self.grid.reset()
+        self.blocks = [IBlock(), JBlock(), LBlock(), OBlock(), SBlock(), TBlock(), ZBlock()]
+        self.current_block = self.random_blocks()
+        self.next_block = self.random_blocks()
+        
     def block_fits(self):
         tiles = self.current_block.get_cell_position()
         for tile in tiles:
@@ -297,15 +338,18 @@ while True:
             sys.exit()
         # Keys functions 
         if event.type == pg.KEYDOWN:
-            if event.key == pg.K_LEFT:
+            if game.gameOver == True:
+                game.gameOver = False
+                game.reset()
+            if event.key == pg.K_LEFT and game.gameOver == False:
                 game.moveLeft()
-            if event.key == pg.K_RIGHT:
+            if event.key == pg.K_RIGHT and game.gameOver == False:
                 game.moveRight()
-            if event.key == pg.K_DOWN:
+            if event.key == pg.K_DOWN and game.gameOver == False:
                 game.moveDown()
-            if event.key == pg.K_UP:
+            if event.key == pg.K_UP and game.gameOver == False:
                 game.rotate()
-        if event.type == GAME_UPDATE:
+        if event.type == GAME_UPDATE and game.gameOver == False:
             game.moveDown()
             
     window.fill((0, 40, 20))  # Clear the window
