@@ -272,24 +272,24 @@ class Gameplay:
     def random_blocks(self):
         if len(self.blocks) == 0:
             self.blocks = [IBlock(), JBlock(), LBlock(), OBlock(), SBlock(), TBlock(), ZBlock()]
-        block =  random.choice(self.blocks)
+        block = random.choice(self.blocks)
         self.blocks.remove(block)
         return block
 
     # Moving blocks
     def moveLeft(self):
         self.current_block.move(0, -1)
-        if self.block_check() ==  False or self.block_fits() == False:
+        if self.block_check() == False or self.block_fits() == False:
             self.current_block.move(0, 1)
 
     def moveRight(self):
         self.current_block.move(0, 1)
-        if self.block_check() ==  False or self.block_fits() == False:
+        if self.block_check() == False or self.block_fits() == False:
             self.current_block.move(0, -1)
 
     def moveDown(self):
         self.current_block.move(1, 0)
-        if self.block_check() ==  False or self.block_fits() == False:
+        if self.block_check() == False or self.block_fits() == False:
             self.current_block.move(-1, 0)
             self.lockBlock()
 
@@ -305,13 +305,13 @@ class Gameplay:
             self.grid.grid[position.row][position.column] = self.current_block.id
         self.current_block = self.next_block
         self.next_block = self.random_blocks()
-        self.grid.clearFullRows()
         lines_cleared = self.grid.clearFullRows()
         self.cleared_lines += lines_cleared
         self.score += self.calculate_score(lines_cleared)
         self.update_level()
         if self.block_fits() == False:
             self.gameOver = True
+        self.update_scoreboard()
 
     def update_scoreboard(self):
         self.score_text = self.font.render(f"Score: {self.score}", True, Colors.white)
@@ -339,6 +339,9 @@ class Gameplay:
 
     def reset(self):
         self.grid.reset()
+        self.score = 0
+        self.level = 1
+        self.cleared_lines = 0
         self.blocks = [IBlock(), JBlock(), LBlock(), OBlock(), SBlock(), TBlock(), ZBlock()]
         self.current_block = self.random_blocks()
         self.next_block = self.random_blocks()
@@ -395,5 +398,6 @@ while True:
     game.draw(window)
     # tetris_board.draw(window)  # Draw the Tetris board
     # block.draw(window)
+    game.draw_scoreboard(window)
     pg.display.update()
     clock.tick(60)
