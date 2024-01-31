@@ -16,7 +16,7 @@ board_x, board_y = 250, 50
 holder_x, holder_y = 50, 100
 scoreboard_x, scoreboard_y = 50, 400
 next_x, next_y = 650, 100
-
+speed = 200
 # Create the game window
 window = pg.display.set_mode((window_width, window_height))
 
@@ -84,6 +84,22 @@ class Block:
             x = board_x + tile.column * self.cellSize + 1
             y = board_y + tile.row * self.cellSize + 1
             tileRect = pg.Rect(x, y, self.cellSize - 1, self.cellSize - 1)
+            pg.draw.rect(window, self.colors[self.id], tileRect)
+    
+    def draw_nextBlock(self, window, offsetX, offsetY):
+        tiles = self.get_cell_position()
+        for tile in tiles:
+            x = offsetY + board_x + tile.column * self.cellSize
+            y = offsetX + board_y + tile.row * self.cellSize
+            tileRect = pg.Rect(x, y, self.cellSize -1, self.cellSize -1)
+            pg.draw.rect(window, self.colors[self.id], tileRect)
+    
+    def draw_holded_block(self, window, offsetX, offsetY):
+        tiles = self.get_cell_position()
+        for tile in tiles:
+            x = offsetY + board_x + tile.column * self.cellSize
+            y = offsetX + board_y + tile.row * self.cellSize
+            tileRect = pg.Rect(x, y, self.cellSize -1, self.cellSize -1)
             pg.draw.rect(window, self.colors[self.id], tileRect)
 
 # Types of blocks
@@ -267,7 +283,11 @@ class Gameplay:
         self.score_text = self.font.render("Score: 0", True, Colors.white)
         self.level_text = self.font.render("Level: 1", True, Colors.white)
         self.lines_text = self.font.render("Lines: 0", True, Colors.white)
-
+        self.gameOver_text = self.font.render("Game Over", True, Colors.white)
+        #pg.mixer.music.load("Sounds/")
+        #pg.mixer.music.play(-1)
+        
+        print(self.score)
     # Get random blocks
     def random_blocks(self):
         if len(self.blocks) == 0:
@@ -297,7 +317,7 @@ class Gameplay:
         self.current_block.rotate()
         if self.block_check() == False or self.block_fits() == False:
             self.current_block.undo_rotation()
-
+        
     # Lock block if is maximum down
     def lockBlock(self):
         tiles = self.current_block.get_cell_position()
@@ -360,17 +380,31 @@ class Gameplay:
                 return False
         return True
 
+    def holder(self, window):
+        self.holded_block = self.current_block
+        self.holded_block.draw_holded_block(window, 500, 300)
+        self.current_block = self.next_block
+        self.next_block = self.random_blocks()
+        
     def draw(self, window):
         self.grid.draw(window)
         self.current_block.draw(window)
         self.draw_scoreboard(window)
+        if self.next_block.id == 3:
+            self.next_block.draw_nextBlock(window, 180, 300)
+        elif self.next_block.id == 4:
+            self.next_block.draw_nextBlock(window, 175, 300)
+        else:
+            self.next_block.draw_nextBlock(window, 170, 320)
+    
 
 clock = pg.time.Clock()
 
 game = Gameplay()
 
 GAME_UPDATE = pg.USEREVENT
-pg.time.set_timer(GAME_UPDATE, 200)
+pg.time.set_timer(GAME_UPDATE, speed)
+
 # Main game loop
 while True:
     for event in pg.event.get():
@@ -392,9 +426,14 @@ while True:
                 game.rotate()
         if event.type == GAME_UPDATE and game.gameOver == False:
             game.moveDown()
+        if event.type == pg.KEYDOWN:
+            if event.key == pg.K_c:
+                game.holder(window)       
 
     window.fill((0, 40, 20))  # Clear the window
-
+    if game.gameOver == True:
+        window.blit(game.gameOver_text, (660, 550, 50, 50))
+        
     game.draw(window)
     # tetris_board.draw(window)  # Draw the Tetris board
     # block.draw(window)
