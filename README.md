@@ -13,5 +13,3 @@
 # Game developers:
 	Milosian https://github.com/Milosian
 	Titan_GamesYt https://github.com/TytanGamesYt
-
-Translated with DeepL.com (free version)
