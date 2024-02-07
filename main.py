@@ -6,7 +6,7 @@ import random
 pg.init()
 
 # Setting up window dimensions and parameters
-pg.display.set_caption("Tetris")
+pg.display.set_caption("PYTetris")
 window_width, window_height = 850, 800
 board_width, board_height = 750, 750
 holder_width, holder_height = 150, 150
