@@ -3,6 +3,7 @@
 # SCREENSHOTS
 
 ![gameplay1](https://github.com/Milosian/Tetris/assets/93874492/64a0e224-7d44-48bf-9670-a52cf70be08b)
+![gameOVER](https://github.com/Milosian/Tetris/assets/93874492/c230a313-7864-43f8-ac84-de883ae65b18)
 
 # TO IMPROVE:
 - improve the block holder action so that you can swap only once until it drops
