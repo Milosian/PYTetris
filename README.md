@@ -1,7 +1,8 @@
 # Tetris 2D game in Python language
 
-# HOW TO RUN?
-- open main.py(but you need to have installed pygame) or main.exe file
+# SCREENSHOTS
+
+![gameplay1](https://github.com/Milosian/Tetris/assets/93874492/64a0e224-7d44-48bf-9670-a52cf70be08b)
 
 # TO IMPROVE:
 - improve the block holder action so that you can swap only once until it drops
